@@ -1,27 +1,51 @@
-
-
 from collections import deque
 
 class Gate:
     def __init__(self):
-        # TODO: create two queues and a cycle pointer 0..3 for [F,R,R,R]
-        self._pattern = ["fastpass","regular","regular","regular"]
+        self._pattern = ["fastpass", "regular", "regular", "regular"]
         self._idx = 0
-        self._fast = None  # TODO
-        self._reg = None   # TODO
+        self._fast = deque()
+        self._reg = deque()
 
     def arrive(self, line, person_id):
-        # TODO: enqueue into the chosen line
-        raise NotImplementedError
+        if line == "fastpass":
+            self._fast.append(person_id)
+        else:
+            self._reg.append(person_id)
 
     def serve(self):
-        """
-        Return the next person according to the repeating pattern.
-        Skip empty lines but still move the cycle pointer correctly.
-        Decide error behavior when both lines are empty.
-        """
-        raise NotImplementedError
+        if not self._fast and not self._reg:
+            raise IndexError("No one in line to serve")
+
+        n = len(self._pattern)
+        for _ in range(n):
+            line_type = self._pattern[self._idx]
+            self._idx = (self._idx + 1) % n
+            if line_type == "fastpass" and self._fast:
+                return self._fast.popleft()
+            elif line_type == "regular" and self._reg:
+                return self._reg.popleft()
+
+        while self._fast or self._reg:
+            line_type = self._pattern[self._idx]
+            self._idx = (self._idx + 1) % n
+            if line_type == "fastpass" and self._fast:
+                return self._fast.popleft()
+            elif line_type == "regular" and self._reg:
+                return self._reg.popleft()
+
+
+        raise IndexError("No one in line to serve")
 
     def peek_next_line(self):
-        # TODO: compute which line would be served next (consider empties)
-        raise NotImplementedError
+        """Return which line would be served next, considering empties."""
+        n = len(self._pattern)
+        start_idx = self._idx
+        for _ in range(n):
+            line_type = self._pattern[start_idx]
+            if line_type == "fastpass" and self._fast:
+                return "fastpass"
+            elif line_type == "regular" and self._reg:
+                return "regular"
+            start_idx = (start_idx + 1) % n
+        return None
